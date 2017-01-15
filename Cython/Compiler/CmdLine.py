@@ -37,6 +37,7 @@ Options:
   --annotate-coverage <cov.xml>  Annotate and include coverage information from cov.xml.
   --line-directives              Produce #line directives pointing to the .pyx source
   --cplus                        Output a C++ rather than C file.
+  --np-pythran                   Use Pythran as a backend for Numpy operations
   --embed[=<method_name>]        Generate a main() function that embeds the Python interpreter.
   -2                             Compile based on Python-2 syntax and code semantics.
   -3                             Compile based on Python-3 syntax and code semantics.
@@ -102,6 +103,8 @@ def parse_command_line(args):
                 options.use_listing_file = 1
             elif option in ("-+", "--cplus"):
                 options.cplus = 1
+            elif option == "--np-pythran":
+                options.np_pythran = 1
             elif option == "--embed":
                 Options.embed = pop_value("main")
             elif option.startswith("-I"):

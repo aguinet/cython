@@ -22,13 +22,14 @@ from . import Nodes
 from . import Options
 from . import TypeSlots
 from . import PyrexTypes
+from . import Pythran
 
 from .Errors import error, warning
 from .PyrexTypes import py_object_type
 from ..Utils import open_new_file, replace_suffix, decode_filename
 from .Code import UtilityCode
 from .StringEncoding import EncodedString
-
+from .Pythran import has_np_pythran
 
 def check_c_declarations_pxd(module_node):
     module_node.scope.check_c_classes_pxd()
@@ -103,6 +104,8 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
             self.scope.merge_in(scope)
 
     def analyse_declarations(self, env):
+        if has_np_pythran(env):
+            Pythran.include_pythran_generic(env)
         if self.directives:
             env.old_style_globals = self.directives['old_style_globals']
         if not Options.docstrings:
@@ -115,6 +118,7 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         else:
             env.doc = self.doc
         env.directives = self.directives
+
         self.body.analyse_declarations(env)
 
     def prepare_utility_code(self):
@@ -711,6 +715,12 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         code.putln('static int %s = 0;' % Naming.clineno_cname)
         code.putln('static const char * %s= %s;' % (Naming.cfilenm_cname, Naming.file_c_macro))
         code.putln('static const char *%s;' % Naming.filename_cname)
+
+        if has_np_pythran(env):
+            code.putln("/*--- Pythran/numpy conversion code ---*/")
+            self.generate_pythran_conversion_code(env, code)
+            code.putln("/*--- C++ inplace object destructor helper ---*/")
+            self.generate_cpp_inplace_object_destructor(env, code)
 
     def generate_extern_c_macro_definition(self, code):
         name = Naming.extern_c_macro
@@ -2840,6 +2850,26 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
             code.putln(
                 "%s = &%s;" % (
                     type.typeptr_cname, type.typeobj_cname))
+
+    def generate_pythran_conversion_code(self, env, code):
+        code.putln('''
+template <class T>
+auto to_python_from_expr(T &&value) -> decltype(to_python(
+      typename pythonic::returnable<typename std::remove_cv<typename std::remove_reference<T>::type>::type>::type{std::forward<T>(value)}))
+{
+  using returnable_type = typename pythonic::returnable<typename std::remove_cv<typename std::remove_reference<T>::type>::type>::type;
+  return to_python(returnable_type{std::forward<T>(value)});
+}
+        ''')
+
+    def generate_cpp_inplace_object_destructor(self, env, code):
+        code.putln('''
+template <class T>
+inline static void __cython_destructor(T& o)
+{
+  o.~T();
+}
+	''')
 
 def generate_cfunction_declaration(entry, env, code, definition):
     from_cy_utility = entry.used and entry.utility_code_definition

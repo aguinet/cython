@@ -534,6 +534,7 @@ class CompilationOptions(object):
     formal_grammar    boolean  Parse the file with the formal grammar
 
     cplus             boolean   Compile as c++ code
+    np_pythran        boolean   Use Pythran as backend for Numpy operations
     """
 
     def __init__(self, defaults=None, **kw):
@@ -569,6 +570,10 @@ class CompilationOptions(object):
         if options['cache'] is True:
             options['cache'] = os.path.expanduser("~/.cycache")
 
+        if options['np_pythran'] and not options['cplus']:
+            import warnings
+            warnings.warn("C++ mode forced when in Pythran mode!")
+            options['cplus'] = True
         self.__dict__.update(options)
 
     def configure_language_defaults(self, source_extension):
@@ -753,4 +758,5 @@ default_options = dict(
     output_dir=None,
     build_dir=None,
     cache=None,
+    np_pythran=False
 )

@@ -23,7 +23,6 @@ from .StringEncoding import EncodedString, _unicode
 from .Errors import error, warning, CompileError, InternalError
 from .Code import UtilityCode
 
-
 class NameNodeCollector(TreeVisitor):
     """Collect all NameNodes of a (sub-)tree in the ``name_nodes``
     attribute.
