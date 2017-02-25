@@ -461,7 +461,6 @@ class FusedCFuncDefNode(StatListNode):
                 bint __pyx_memoryview_check(object)
             """)
 
-
         pyx_code.local_variable_declarations.put_chunk(
             u"""
                 cdef {{memviewslice_cname}} memslice
@@ -486,8 +485,9 @@ class FusedCFuncDefNode(StatListNode):
         pyx_code.func_defs.put_chunk(
             u"""
                 def __is_little_endian():
-                    cdef int endian_detector = 1
-                    return (<char*>&endian_detector)[0] != 0
+                    cdef {{lecheck_cname}} C
+                    C.i = 0x01020304
+                    return C.c[0] == 4
             """)
 
         seen_int_dtypes = set()
@@ -569,6 +569,7 @@ class FusedCFuncDefNode(StatListNode):
             arg.type for arg in self.node.args if arg.type.is_fused])
 
         context = {
+            'lecheck_cname': '__LECheck',
             'memviewslice_cname': MemoryView.memviewslice_cname,
             'func_args': self.node.args,
             'n_fused': len(fused_types),
@@ -577,6 +578,12 @@ class FusedCFuncDefNode(StatListNode):
 
         pyx_code = Code.PyxCodeWriter(context=context)
         decl_code = Code.PyxCodeWriter(context=context)
+        decl_code.put_chunk(
+            u"""
+                cdef union {{lecheck_cname}}:
+                    unsigned int i
+                    char c[4]
+            """)
         decl_code.put_chunk(
             u"""
                 cdef extern from *:

@@ -859,7 +859,7 @@ def cythonize(module_list, exclude=None, nthreads=0, aliases=None, quiet=False, 
                     c_file = base + '.cpp'
                     options = pythran_options
                     m.include_dirs.append(pythran_include_dir)
-                    m.extra_compile_args.extend(('-std=c++11','-DENABLE_PYTHON_MODULE'))
+                    m.extra_compile_args.extend(('-std=c++11','-DENABLE_PYTHON_MODULE','-D__PYTHRAN__'))
                     m.language = 'c++'
                 elif m.language == 'c++':
                     c_file = base + '.cpp'

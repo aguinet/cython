@@ -717,10 +717,8 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         code.putln('static const char *%s;' % Naming.filename_cname)
 
         if has_np_pythran(env):
-            code.putln("/*--- Pythran/numpy conversion code ---*/")
-            self.generate_pythran_conversion_code(env, code)
-            code.putln("/*--- C++ inplace object destructor helper ---*/")
-            self.generate_cpp_inplace_object_destructor(env, code)
+            env.use_utility_code(UtilityCode.load_cached("CythonDestructor",  "CppSupport.cpp"))
+            env.use_utility_code(UtilityCode.load_cached("PythranConversion", "CppSupport.cpp"))
 
     def generate_extern_c_macro_definition(self, code):
         name = Naming.extern_c_macro
@@ -2850,26 +2848,6 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
             code.putln(
                 "%s = &%s;" % (
                     type.typeptr_cname, type.typeobj_cname))
-
-    def generate_pythran_conversion_code(self, env, code):
-        code.putln('''
-template <class T>
-auto to_python_from_expr(T &&value) -> decltype(to_python(
-      typename pythonic::returnable<typename std::remove_cv<typename std::remove_reference<T>::type>::type>::type{std::forward<T>(value)}))
-{
-  using returnable_type = typename pythonic::returnable<typename std::remove_cv<typename std::remove_reference<T>::type>::type>::type;
-  return to_python(returnable_type{std::forward<T>(value)});
-}
-        ''')
-
-    def generate_cpp_inplace_object_destructor(self, env, code):
-        code.putln('''
-template <class T>
-inline static void __cython_destructor(T& o)
-{
-  o.~T();
-}
-	''')
 
 def generate_cfunction_declaration(entry, env, code, definition):
     from_cy_utility = entry.used and entry.utility_code_definition

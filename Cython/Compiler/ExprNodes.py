@@ -10655,13 +10655,13 @@ class BinopNode(ExprNode):
     def analyse_operation(self, env):
         if self.is_pythran_operation(env):
             self.type = self.result_type(self.operand1.type,
-                                         self.operand2.type,env)
+                                         self.operand2.type, env)
             assert self.type.is_pythran_expr
             self.is_temp = 1
         elif self.is_py_operation():
             self.coerce_operands_to_pyobjects(env)
             self.type = self.result_type(self.operand1.type,
-                                         self.operand2.type,env)
+                                         self.operand2.type, env)
             assert self.type.is_pyobject
             self.is_temp = 1
         elif self.is_cpp_operation():

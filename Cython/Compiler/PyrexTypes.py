@@ -1063,6 +1063,7 @@ class BufferType(BaseType):
                 self.cast == other_type.cast and
                 (not compare_base or self.base.same_as(other_type.base)))
 
+
 class PyObjectType(PyrexType):
     #
     #  Base class for all Python object types (reference-counted).

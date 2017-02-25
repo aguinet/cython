@@ -3,9 +3,6 @@ from .PyrexTypes import BufferType, CType, CTypedefType, CStructOrUnionType
 _pythran_var_prefix = "__pythran__"
 # Pythran/Numpy specific operations
 def has_np_pythran(env):
-    scope = env.outer_scope
-    while scope != None:
-        scope = scope.outer_scope
     ctx = env.global_scope().context
     if ctx is None:
         return False
@@ -15,7 +12,7 @@ def has_np_pythran(env):
 def is_pythran_supported_dtype(type_):
     if isinstance(type_, CTypedefType):
         return is_pythran_supported_type(type_.typedef_base_type)
-    return hasattr(type_,"is_numeric") and type_.is_numeric
+    return type_.is_numeric
 
 def pythran_type(Ty,ptype="ndarray"):
     if Ty.is_buffer:
@@ -32,8 +29,8 @@ def pythran_type(Ty,ptype="ndarray"):
     from .PyrexTypes import PythranExpr
     if Ty.is_pythran_expr:
         return Ty.pythran_type
-    if hasattr(Ty,"is_none") and Ty.is_none:
-        return "decltype(pythonic::__builtin__::None)"
+    #if Ty.is_none:
+    #    return "decltype(pythonic::__builtin__::None)"
     if Ty.is_numeric:
         return Ty.sign_and_name()
     raise ValueError("unsupported pythran type %s (%s)" % (str(Ty), str(type(Ty))))
@@ -47,8 +44,8 @@ def pythran_binop_type(op, tA, tB):
         (pythran_type(tA), op, pythran_type(tB))
 
 def pythran_unaryop_type(op, type_):
-    return "decltype(%sstd::declval<%s>())" % \
-        (op, pythran_type(type_))
+    return "decltype(%sstd::declval<%s>())" % (
+        op, pythran_type(type_))
 
 def pythran_indexing_type(type_, indices):
     def index_code(idx):
@@ -64,7 +61,7 @@ def pythran_indexing_type(type_, indices):
             return "std::declval<long>()"
         elif idx.type.is_pythran_expr:
             return "std::declval<%s>()" % idx.type.pythran_type
-        raise ValueError("unsupported indice type %s!" % str(idx.type))
+        raise ValueError("unsupported indice type %s!" % idx.type)
     indexing = ",".join(index_code(idx) for idx in indices)
     return type_remove_ref("decltype(std::declval<%s>()(%s))" % (pythran_type(type_), indexing))
 
@@ -90,10 +87,9 @@ def pythran_func_type(func, args):
     return "decltype(pythonic::numpy::functor::%s{}(%s))" % (func, args)
 
 def to_pythran(op,ptype=None):
-    #if hasattr(op,"entry") and hasattr(op.entry, "pythran_buf") and op.entry.pythran_buf is not None:
-    #    return op.entry.pythran_buf.cname
     op_type = op.type
-    if is_type(op_type,["is_pythran_expr","is_int","is_numeric","is_float","is_complex"]):
+    if is_type(op_type,["is_pythran_expr", "is_int", "is_numeric", "is_float",
+        "is_complex"]):
         return op.result()
     if op.is_none:
         return "pythonic::__builtin__::None"
@@ -107,7 +103,7 @@ def from_pythran():
 
 def is_type(type_, types):
     for attr in types:
-        if hasattr(type_, attr) and getattr(type_, attr):
+        if getattr(type_, attr, False):
             return True
     return False
 
@@ -116,16 +112,17 @@ def is_pythran_supported_node_or_none(node):
 
 def is_pythran_supported_type(type_):
     pythran_supported = (
-        "is_pythran_expr","is_int","is_numeric","is_float","is_none","is_complex")
+        "is_pythran_expr", "is_int", "is_numeric", "is_float", "is_none",
+        "is_complex")
     return is_type(type_, pythran_supported) or is_pythran_expr(type_)
 
 def is_pythran_supported_operation_type(type_):
     pythran_supported = (
-        "is_pythran_expr","is_int","is_numeric","is_float","is_complex")
+        "is_pythran_expr", "is_int", "is_numeric", "is_float", "is_complex")
     return is_type(type_,pythran_supported) or is_pythran_expr(type_)
 
 def is_pythran_expr(type_):
-    return hasattr(type_, "is_pythran_expr") and type_.is_pythran_expr
+    return type_.is_pythran_expr
 
 def is_pythran_buffer(type_):
     return type_.is_numpy_buffer and is_pythran_supported_dtype(type_.dtype) and \
@@ -142,7 +139,8 @@ def include_pythran_generic(env):
     for i in (8,16,32,64):
         env.add_include_file("pythonic/types/uint%d.hpp" % i)
         env.add_include_file("pythonic/types/int%d.hpp" % i)
-    for t in ("float","float32","float64","set","slice","tuple","int","long","complex","complex64","complex128"):
+    for t in ("float", "float32", "float64", "set", "slice", "tuple", "int",
+            "long", "complex", "complex64", "complex128"):
         env.add_include_file("pythonic/types/%s.hpp" % t)
 
 def include_pythran_type(env, type_):
