@@ -423,9 +423,9 @@ class FusedCFuncDefNode(StatListNode):
                         kind = ord(dtype.kind)
                         # We only support the endianess of the current compiler
                         byteorder = dtype.byteorder
-                        if byteorder == "<" and not __is_little_endian():
+                        if byteorder == "<" and not __Is_Little_Endian():
                             arg_is_pythran_compatible = False
-                        if byteorder == ">" and __is_little_endian():
+                        if byteorder == ">" and __Is_Little_Endian():
                             arg_is_pythran_compatible = False
                         dtype_signed = kind == 'i'
                         if arg_is_pythran_compatible:
@@ -481,13 +481,6 @@ class FusedCFuncDefNode(StatListNode):
                     ndarray = numpy.ndarray
                 except (ImportError, AttributeError, TypeError):
                     ndarray = None
-            """)
-        pyx_code.func_defs.put_chunk(
-            u"""
-                def __is_little_endian():
-                    cdef {{lecheck_cname}} C
-                    C.i = 0x01020304
-                    return C.c[0] == 4
             """)
 
         seen_int_dtypes = set()
@@ -569,7 +562,6 @@ class FusedCFuncDefNode(StatListNode):
             arg.type for arg in self.node.args if arg.type.is_fused])
 
         context = {
-            'lecheck_cname': '__LECheck',
             'memviewslice_cname': MemoryView.memviewslice_cname,
             'func_args': self.node.args,
             'n_fused': len(fused_types),
@@ -580,14 +572,9 @@ class FusedCFuncDefNode(StatListNode):
         decl_code = Code.PyxCodeWriter(context=context)
         decl_code.put_chunk(
             u"""
-                cdef union {{lecheck_cname}}:
-                    unsigned int i
-                    char c[4]
-            """)
-        decl_code.put_chunk(
-            u"""
                 cdef extern from *:
                     void __pyx_PyErr_Clear "PyErr_Clear" ()
+                    int __Is_Little_Endian()
             """)
         decl_code.indent()
 

@@ -337,6 +337,8 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         else:
             rootwriter = Code.CCodeWriter()
 
+        env.use_utility_code(UtilityCode.load("IsLittleEndian","ModuleSetupCode.c"))
+
         c_code_config = generate_c_code_config(env, options)
 
         globalstate = Code.GlobalState(
