@@ -599,6 +599,22 @@ class PxdPostParse(CythonTransform, SkipDeclarations):
         else:
             return node
 
+class TrackNumpyAttributes(CythonTransform, SkipDeclarations):
+    def __init__(self, context):
+        super(TrackNumpyAttributes, self).__init__(context)
+        self.numpy_module_names = set()
+
+    def visit_CImportStatNode(self, node):
+        if node.module_name == u"numpy":
+            self.numpy_module_names.add(node.as_name or u"numpy")
+        return node
+
+    def visit_AttributeNode(self, node):
+        self.visitchildren(node)
+        if node.obj.is_name and node.obj.name in self.numpy_module_names:
+            node.is_numpy_attribute = True
+        return node
+
 class InterpretCompilerDirectives(CythonTransform, SkipDeclarations):
     """
     After parsing, directives can be stored in a number of places:

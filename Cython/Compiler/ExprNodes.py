@@ -252,7 +252,7 @@ class ExprNode(Node):
     #                            Cached result of subexpr_nodes()
     #  use_managed_ref boolean   use ref-counted temps/assignments/etc.
     #  result_is_used  boolean   indicates that the result will be dropped and the
-    #  is_numpy_function   boolean   Is a Numpy function
+    #  is_numpy_attribute   boolean   Is a Numpy module attribute
     #                            result_code/temp_result can safely be set to None
 
     result_ctype = None
@@ -261,7 +261,7 @@ class ExprNode(Node):
     old_temp = None # error checker for multiple frees etc.
     use_managed_ref = True # can be set by optimisation transforms
     result_is_used = True
-    is_numpy_function = False
+    is_numpy_attribute = False
 
     #  The Analyse Expressions phase for expressions is split
     #  into two sub-phases:
@@ -5227,7 +5227,7 @@ class SimpleCallNode(CallNode):
 
         func_type = self.function_type()
         self.is_numpy_call_with_exprs = False
-        if has_np_pythran(env) and self.function.is_numpy_function:
+        if has_np_pythran(env) and self.function.is_numpy_attribute:
             has_pythran_args = True
             self.arg_tuple = TupleNode(self.pos, args = self.args)
             self.arg_tuple = self.arg_tuple.analyse_types(env)
@@ -6710,10 +6710,6 @@ class AttributeNode(ExprNode):
         self.member = self.attribute
         self.type = py_object_type
         self.is_py_attr = 1
-        # Check for numpy calls
-        # TODO: this is a very weak test, but how to make it better?
-        if self.obj.is_name and self.obj.name == "numpy":
-            self.is_numpy_function = True
 
         if not obj_type.is_pyobject and not obj_type.is_error:
             if obj_type.can_coerce_to_pyobject(env):
