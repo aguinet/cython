@@ -719,7 +719,6 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         code.putln('static const char *%s;' % Naming.filename_cname)
 
         if has_np_pythran(env):
-            env.use_utility_code(UtilityCode.load_cached("CythonDestructor",  "CppSupport.cpp"))
             env.use_utility_code(UtilityCode.load_cached("PythranConversion", "CppSupport.cpp"))
 
     def generate_extern_c_macro_definition(self, code):

@@ -47,15 +47,6 @@ static void __Pyx_CppExn2PyErr() {
 }
 #endif
 
-/////////////// CythonDestructor.proto ///////////////
-
-template <class T>
-inline static void __cython_destructor(T& o)
-{
-  o.~T();
-}
-
-
 /////////////// PythranConversion.proto ///////////////
 
 template <class T>

@@ -4135,8 +4135,7 @@ class BufferIndexNode(_IndexingBaseNode):
             # support move-assignation easily.
             # This, we explicitly destroy then in-place new objects in this
             # case.
-            # __cython_destructor in defined in ModuleNode.py
-            code.putln("__cython_destructor(%s);" % obj)
+            code.putln("__Pyx_call_destructor(%s);" % obj)
             code.putln("new (&%s) decltype(%s){%s};" % (obj, obj, self.base.pythran_result()))
             code.putln("%s(%s) %s= %s;" % (
                 obj,
@@ -4168,7 +4167,7 @@ class BufferIndexNode(_IndexingBaseNode):
     def generate_result_code(self, code):
         if is_pythran_expr(self.base.type):
             res = self.result()
-            code.putln("__cython_destructor(%s);" % res)
+            code.putln("__Pyx_call_destructor(%s);" % res)
             code.putln("new (&%s) decltype(%s){%s(%s)};" % (
                 res,
                 res,
@@ -5644,7 +5643,7 @@ class PyMethodCallNode(SimpleCallNode):
 
         if self.is_numpy_call_with_exprs:
             code.putln("// function evaluation code for numpy function")
-            code.putln("__cython_destructor(%s);" % self.result())
+            code.putln("__Pyx_call_destructor(%s);" % self.result())
             code.putln("new (&%s) decltype(%s){pythonic::numpy::functor::%s{}(%s)};" % (
                 self.result(),
                 self.result(),
@@ -9738,7 +9737,7 @@ class UnopNode(ExprNode):
     def generate_result_code(self, code):
         if self.type.is_pythran_expr:
             code.putln("// Pythran unaryop")
-            code.putln("__cython_destructor(%s);" % self.result())
+            code.putln("__Pyx_call_destructor(%s);" % self.result())
             code.putln("new (&%s) decltype(%s){%s%s};" % (
                 self.result(),
                 self.result(),
@@ -10755,7 +10754,7 @@ class BinopNode(ExprNode):
     def generate_result_code(self, code):
         if self.type.is_pythran_expr:
             code.putln("// Pythran binop")
-            code.putln("__cython_destructor(%s);" % self.result())
+            code.putln("__Pyx_call_destructor(%s);" % self.result())
             code.putln("new (&%s) decltype(%s){%s %s %s};" % (
                 self.result(),
                 self.result(),
