@@ -873,7 +873,8 @@ class InterpretCompilerDirectives(CythonTransform, SkipDeclarations):
             if optname:
                 directivetype = Options.directive_types.get(optname)
                 if directivetype is bool:
-                    return [(optname, True)]
+                    arg = ExprNodes.BoolNode(node.pos, value=True)
+                    return [self.try_to_parse_directive(optname, [arg], None, node.pos)]
                 elif directivetype is None:
                     return [(optname, None)]
                 else:
@@ -883,6 +884,8 @@ class InterpretCompilerDirectives(CythonTransform, SkipDeclarations):
 
     def try_to_parse_directive(self, optname, args, kwds, pos):
         directivetype = Options.directive_types.get(optname)
+        if optname == 'np_pythran' and not self.context.cpp:
+            raise PostParseError(pos, 'The %s directive can only be used in C++ mode.' % optname)
         if len(args) == 1 and isinstance(args[0], ExprNodes.NoneNode):
             return optname, Options.get_directive_defaults()[optname]
         elif directivetype is bool:

@@ -1206,7 +1206,7 @@ class ModuleScope(Scope):
         return scope
 
     def generate_library_function_declarations(self, code):
-        if self.context.options.np_pythran:
+        if self.directives['np_pythran']:
             code.putln("import_array();")
 
     def lookup_submodule(self, name):

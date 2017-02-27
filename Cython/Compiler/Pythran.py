@@ -3,11 +3,10 @@ from .PyrexTypes import BufferType, CType, CTypedefType, CStructOrUnionType
 _pythran_var_prefix = "__pythran__"
 # Pythran/Numpy specific operations
 def has_np_pythran(env):
-    ctx = env.global_scope().context
-    if ctx is None:
-        return False
-    options = ctx.options
-    return options is not None and options.np_pythran
+    while not env is None:
+        if hasattr(env, "directives") and env.directives.get('np_pythran', False):
+            return True
+        env = env.outer_scope
 
 def is_pythran_supported_dtype(type_):
     if isinstance(type_, CTypedefType):
