@@ -558,6 +558,8 @@ class FusedCFuncDefNode(StatListNode):
         """
         from . import TreeFragment, Code, UtilityCode
 
+        env.use_utility_code(Code.UtilityCode.load_cached("IsLittleEndian","ModuleSetupCode.c"))
+
         fused_types = self._get_fused_base_types([
             arg.type for arg in self.node.args if arg.type.is_fused])
 
