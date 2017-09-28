@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from .PyrexTypes import CType, CTypedefType, CStructOrUnionType
 
-import cython
+#import cython
 
 
 # Pythran/Numpy specific operations
@@ -15,7 +15,7 @@ def has_np_pythran(env):
         env = env.outer_scope
 
 
-@cython.ccall
+#@cython.ccall
 def is_pythran_supported_dtype(type_):
     if isinstance(type_, CTypedefType):
         return is_pythran_supported_type(type_.typedef_base_type)
@@ -43,7 +43,7 @@ def pythran_type(Ty, ptype="ndarray"):
     raise ValueError("unsupported pythran type %s (%s)" % (Ty, type(Ty)))
 
 
-@cython.cfunc
+#@cython.cfunc
 def type_remove_ref(ty):
     return "typename std::remove_reference<%s>::type" % ty
 
@@ -67,7 +67,7 @@ def pythran_indexing_type(type_, indices):
             else:
                 func = "slice"
                 n = 3
-            return "pythonic::types::%s(%s)" % (
+            return "pythonic::types::%s{%s}" % (
                 func, ",".join(["0"]*n))
         elif idx.type.is_int:
             return "std::declval<%s>()" % idx.type.sign_and_name()
@@ -88,7 +88,7 @@ def pythran_indexing_code(indices):
                 values = values[:2]
             else:
                 func = "slice"
-            return "pythonic::types::%s(%s)" % (
+            return "pythonic::types::%s{%s}" % (
                 func, ",".join((v.pythran_result() for v in values)))
         elif idx.type.is_int:
             return to_pythran(idx)
@@ -104,13 +104,13 @@ def pythran_func_type(func, args):
     return "decltype(pythonic::numpy::functor::%s{}(%s))" % (func, args)
 
 
-@cython.ccall
+#@cython.ccall
 def to_pythran(op, ptype=None):
     op_type = op.type
-    if op_type.is_int:
-        # Make sure that integer literals always have exactly the type that the templates expect.
-        return op_type.cast_code(op.result())
-    if is_type(op_type, ["is_pythran_expr", "is_numeric", "is_float", "is_complex"]):
+#    if op_type.is_int:
+#        # Make sure that integer literals always have exactly the type that the templates expect.
+#        return op_type.cast_code(op.result())
+    if is_type(op_type, ["is_int","is_pythran_expr", "is_numeric", "is_float", "is_complex"]):
         return op.result()
     if op.is_none:
         return "pythonic::__builtin__::None"
@@ -121,7 +121,7 @@ def to_pythran(op, ptype=None):
     return "from_python<%s>(%s)" % (ptype, op.py_result())
 
 
-@cython.cfunc
+#@cython.cfunc
 def is_type(type_, types):
     for attr in types:
         if getattr(type_, attr, False):
@@ -133,7 +133,7 @@ def is_pythran_supported_node_or_none(node):
     return node.is_none or is_pythran_supported_type(node.type)
 
 
-@cython.ccall
+#@cython.ccall
 def is_pythran_supported_type(type_):
     pythran_supported = (
         "is_pythran_expr", "is_int", "is_numeric", "is_float", "is_none", "is_complex")
@@ -146,7 +146,7 @@ def is_pythran_supported_operation_type(type_):
     return is_type(type_,pythran_supported) or is_pythran_expr(type_)
 
 
-@cython.ccall
+#@cython.ccall
 def is_pythran_expr(type_):
     return type_.is_pythran_expr
 
